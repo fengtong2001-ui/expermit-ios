@@ -1,0 +1,13 @@
+{
+  "name": "expermit-ios",
+  "private": true,
+  "version": "0.1.4",
+  "description": "ExPermit 实验记录本 · iOS 版（SwiftUI + WKWebView 壳，源码在 expermit-eln）",
+  "scripts": {
+    "fetch": "node scripts/fetch-www.mjs",
+    "fetch:local": "node scripts/fetch-www.mjs --core ../expermit-eln"
+  },
+  "devDependencies": {
+    "fflate": "0.8.3"
+  }
+}

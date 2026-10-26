@@ -1,0 +1,6 @@
+node_modules
+ExPermit/www
+build
+DerivedData
+*.xcuserstate
+xcuserdata

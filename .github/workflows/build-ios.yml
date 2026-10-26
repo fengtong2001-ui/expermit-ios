@@ -1,0 +1,40 @@
+name: Build iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 核心版本号（如 0.1.4，需核心仓已发布含 www 制品的 Release）
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - name: 取核心网页包
+        run: node scripts/fetch-www.mjs --ver ${{ inputs.version }}
+      - name: 编译（模拟器，无需签名）
+        run: |
+          xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: 归档 .app
+        run: |
+          APP=$(find build/Build/Products/Release-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
+          ditto -c -k --keepParent "$APP" "ExPermit-ios-simulator-${{ inputs.version }}.zip"
+          echo "已打包 $APP"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExPermit-ios-simulator-${{ inputs.version }}
+          path: ExPermit-ios-simulator-${{ inputs.version }}.zip
+      - name: 说明
+        run: |
+          echo "真机安装需要签名：在 Xcode 打开本工程 → Signing & Capabilities 选自己的 Apple ID（免费账号 7 天有效期），连手机 ⌘R 安装。"
