@@ -12,9 +12,17 @@ struct ContentView: UIViewRepresentable {
     let controller = config.userContentController
     controller.add(context.coordinator, name: NativeBridge.saveHandler)
     controller.add(context.coordinator, name: NativeBridge.printHandler)
+    controller.add(context.coordinator, name: IOSAdaptation.themeHandler)
     controller.addUserScript(
       WKUserScript(
         source: NativeBridge.bootstrapJS,
+        injectionTime: .atDocumentStart,
+        forMainFrameOnly: true
+      )
+    )
+    controller.addUserScript(
+      WKUserScript(
+        source: IOSAdaptation.injectionJS,
         injectionTime: .atDocumentStart,
         forMainFrameOnly: true
       )
@@ -23,7 +31,22 @@ struct ContentView: UIViewRepresentable {
     let web = WKWebView(frame: .zero, configuration: config)
     web.navigationDelegate = context.coordinator
     web.scrollView.keyboardDismissMode = .interactive
+    // 页面本身就是 h-dvh 的单屏应用，禁掉外层滚动/回弹与双指缩放
+    web.scrollView.bounces = false
+    web.scrollView.alwaysBounceVertical = false
+    web.scrollView.alwaysBounceHorizontal = false
+    web.scrollView.bouncesZoom = false
+    web.scrollView.isDirectionalLockEnabled = true
+    web.scrollView.showsHorizontalScrollIndicator = false
+    web.scrollView.showsVerticalScrollIndicator = false
+    web.scrollView.delaysContentTouches = false
+    web.scrollView.contentInsetAdjustmentBehavior = .never
+    web.scrollView.minimumZoomScale = 1
+    web.scrollView.maximumZoomScale = 1
+    web.scrollView.pinchGestureRecognizer?.isEnabled = false
     web.backgroundColor = .systemBackground
+    web.underPageBackgroundColor = .systemBackground
+    web.scrollView.backgroundColor = .systemBackground
     web.isOpaque = false
     #if DEBUG
       if #available(iOS 16.4, *) {
@@ -72,8 +95,29 @@ struct ContentView: UIViewRepresentable {
         handleSave(message.body)
       case NativeBridge.printHandler:
         handlePrint()
+      case IOSAdaptation.themeHandler:
+        applyTheme(message.body)
       default:
         break
+      }
+    }
+
+    /// 网页主题变化时同步原生背景/界面风格：灵动岛、键盘、过度滚动区域都跟随页面
+    private func applyTheme(_ body: Any) {
+      guard let dict = body as? [String: Any] else { return }
+      let dark = dict["dark"] as? Bool ?? false
+      let fallback = dark
+        ? UIColor(red: CGFloat(2) / 255, green: CGFloat(6) / 255, blue: CGFloat(23) / 255, alpha: 1)
+        : UIColor.white
+      let color = (dict["color"] as? String).flatMap(UIColor.init(hex:)) ?? fallback
+      DispatchQueue.main.async {
+        guard let web = self.webView else { return }
+        web.backgroundColor = color
+        web.scrollView.backgroundColor = color
+        web.underPageBackgroundColor = color
+        web.overrideUserInterfaceStyle = dark ? .dark : .light
+        web.window?.backgroundColor = color
+        web.window?.overrideUserInterfaceStyle = dark ? .dark : .light
       }
     }
 
@@ -212,16 +256,42 @@ struct ContentView: UIViewRepresentable {
 
     #if DEBUG
       private var didRunSelftest = false
+      private var didApplyDebugLaunch = false
+    #endif
 
-      /// 启动参数 --selftest：页面加载完后调一次原生保存桥，验证分享面板链路
-      func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        guard ProcessInfo.processInfo.arguments.contains("--selftest"), !didRunSelftest else { return }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+      #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if !didApplyDebugLaunch {
+          didApplyDebugLaunch = true
+          // 验证用：--theme=dark|light / --route=settings / --open-search
+          if let themeArg = args.first(where: { $0.hasPrefix("--theme=") }) {
+            let theme = String(themeArg.dropFirst("--theme=".count))
+            webView.evaluateJavaScript("localStorage.setItem('eln-theme','\(theme)'); location.reload()")
+            return
+          }
+          if let routeArg = args.first(where: { $0.hasPrefix("--route=") }) {
+            let route = String(routeArg.dropFirst("--route=".count))
+            webView.evaluateJavaScript("location.hash = '#/\(route)'")
+          }
+          if args.contains("--open-search") {
+            webView.evaluateJavaScript(
+              #"setTimeout(function () { document.querySelector('button[aria-label="搜索"]')?.click() }, 900)"#
+            )
+          }
+          if args.contains("--open-settings") {
+            webView.evaluateJavaScript(
+              #"setTimeout(function () { document.querySelector('button[data-ios-settings="true"]')?.click() }, 900)"#
+            )
+          }
+        }
+        guard args.contains("--selftest"), !didRunSelftest else { return }
         didRunSelftest = true
         webView.evaluateJavaScript(
           "window.expermitMac.saveFile('selftest.txt', btoa('SELFTEST OK'), true)"
         )
-      }
-    #endif
+      #endif
+    }
 
     // MARK: - 下载兜底
 

@@ -54,6 +54,25 @@ GitHub → Actions → **Build iOS** → Run workflow，填核心版本号。产
 | 外链 | http(s)、mailto、tel 交给系统打开 |
 | 下载兜底 | 未走桥接的文件链接由 `WKDownloadDelegate` 接住，完成后同样弹分享面板 |
 | 局域网 | 已声明本地网络权限（WebDAV 同步） |
+| iOS 适配层 | `ExPermit/IOSAdaptation.swift`：只注入 iOS，不改核心仓网页。含安全区/灵动岛、禁用双指缩放、横向与过度滚动回弹、弹层打开时锁底页滚动、搜索框等输入 16px、页头注入「设置与同步」入口、主题色与原生背景同步 |
+
+## iOS 适配层
+
+网页层仍是唯一事实来源；`IOSAdaptation.swift` 只做 iOS 专属的增量修正，所有 CSS 规则都挂在
+`html.ios-shell` 下，浏览器 / PWA / 桌面版不受影响。它依赖两个网页 DOM 约定：
+
+- 页面标题栏是 `header[data-mac-drag-region]`，移动端搜索按钮是 `button[aria-label="搜索"]`
+- 设置路由是 `#/settings`
+
+如果核心仓改了这两处结构，适配层要同步调整；优先在核心仓做通用改动，再删掉对应覆盖。
+
+调试启动参数（仅 DEBUG，`xcrun simctl launch <udid> com.fengtong.expermit.ios -- ...` 或
+`xcrun devicectl device process launch --device <udid> com.fengtong.expermit.ios --route=settings`）：
+
+- `--route=settings`：加载后跳到设置
+- `--open-search` / `--open-settings`：模拟点击搜索 / 齿轮入口
+- `--theme=dark|light|system`：切网页主题（跟随原生背景与状态栏）
+- `--selftest`：调一次原生保存桥，验证分享面板
 
 ## 目录
 

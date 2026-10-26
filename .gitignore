@@ -1,6 +1,7 @@
 node_modules/
 ExPermit/www/
 build/
+build-device/
 DerivedData/
 release/
 *.xcuserstate
