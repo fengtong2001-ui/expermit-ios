@@ -11,16 +11,28 @@ enum IOSAdaptation {
   static let css = """
   html.ios-shell {
     -webkit-text-size-adjust: 100%;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
+    overflow-x: clip;
     overscroll-behavior: none;
   }
   html.ios-shell body {
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
+    overflow-x: clip;
     overscroll-behavior: none;
     background-color: #ffffff;
   }
   html.ios-shell.dark body { background-color: #020617; }
-  html.ios-shell #root { min-height: 100dvh; }
+  html.ios-shell #root {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
   html.ios-shell #main-scroll {
     overflow-x: hidden;
     overscroll-behavior-x: none;
@@ -65,11 +77,37 @@ enum IOSAdaptation {
     overscroll-behavior: none !important;
   }
   html.ios-shell [role="dialog"] {
-    max-height: calc(100dvh - env(safe-area-inset-top) - 16px);
+    max-width: 100vw;
+    max-height: min(92dvh, calc(100dvh - var(--ios-kb, 0px) - env(safe-area-inset-top) - 8px));
+    box-sizing: border-box;
+    overflow-x: hidden;
+    touch-action: pan-y;
+  }
+  html.ios-shell [role="dialog"] .grid > * { min-width: 0; }
+  html.ios-shell [role="dialog"] input,
+  html.ios-shell [role="dialog"] textarea,
+  html.ios-shell [role="dialog"] select,
+  html.ios-shell [role="dialog"] button {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 手机上的底部抽屉：键盘弹出时抬到键盘上方，避免输入框被挡住 */
+  @media (max-width: 639px) {
+    html.ios-shell [role="dialog"][class*="rounded-t-2xl"] {
+      bottom: var(--ios-kb, 0px) !important;
+    }
   }
   html.ios-shell [cmdk-list],
   html.ios-shell [role="dialog"] .overflow-y-auto {
     overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  html.ios-shell [cmdk-list]::-webkit-scrollbar,
+  html.ios-shell [role="dialog"] .overflow-y-auto::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
   """
 
@@ -86,6 +124,54 @@ enum IOSAdaptation {
       style.id = 'expermit-ios-style';
       style.textContent = `\(css)`;
       (doc.head || html).appendChild(style);
+
+      // 锁死页面缩放：iOS 应用内 WKWebView 会尊重 maximum-scale / user-scalable
+      function fixViewport() {
+        var content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+        var meta = doc.querySelector('meta[name="viewport"]');
+        if (meta) {
+          if (meta.getAttribute('content') !== content) meta.setAttribute('content', content);
+        } else if (doc.head) {
+          meta = doc.createElement('meta');
+          meta.name = 'viewport';
+          meta.content = content;
+          doc.head.appendChild(meta);
+        }
+      }
+
+      // 键盘高度 → CSS 变量，底部抽屉据此抬到键盘上方
+      var vv = window.visualViewport;
+      function syncKeyboard() {
+        var ae = doc.activeElement;
+        var editing = !!(ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable));
+        var kb = 0;
+        if (vv && editing) {
+          kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+          // 安全区/工具栏会带来几十像素的高度差，只有明显缩小才算键盘
+          if (kb < 80) kb = 0;
+        }
+        if (window.__iosKb === kb) return;
+        window.__iosKb = kb;
+        html.style.setProperty('--ios-kb', kb + 'px');
+        html.classList.toggle('ios-keyboard-open', kb > 0);
+      }
+
+      if (vv) {
+        vv.addEventListener('resize', syncKeyboard);
+        vv.addEventListener('scroll', syncKeyboard);
+      }
+      window.addEventListener('resize', syncKeyboard);
+      doc.addEventListener('DOMContentLoaded', fixViewport);
+      doc.addEventListener('focusin', function () {
+        setTimeout(syncKeyboard, 50);
+        setTimeout(syncKeyboard, 300);
+      });
+      doc.addEventListener('focusout', function () {
+        setTimeout(syncKeyboard, 50);
+        setTimeout(syncKeyboard, 300);
+      });
+      fixViewport();
+      syncKeyboard();
 
       function postTheme() {
         var dark = html.classList.contains('dark');

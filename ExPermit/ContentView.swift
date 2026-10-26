@@ -44,6 +44,7 @@ struct ContentView: UIViewRepresentable {
     web.scrollView.minimumZoomScale = 1
     web.scrollView.maximumZoomScale = 1
     web.scrollView.pinchGestureRecognizer?.isEnabled = false
+    web.scrollView.delegate = context.coordinator
     web.backgroundColor = .systemBackground
     web.underPageBackgroundColor = .systemBackground
     web.scrollView.backgroundColor = .systemBackground
@@ -82,7 +83,7 @@ struct ContentView: UIViewRepresentable {
   </body></html>
   """
 
-  final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKDownloadDelegate {
+  final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler, WKDownloadDelegate, UIScrollViewDelegate {
     weak var webView: WKWebView?
     /// 下载任务 → (临时文件, 临时目录)，分享面板关闭后清目录
     private var downloads: [WKDownload: (file: URL, dir: URL)] = [:]
@@ -254,6 +255,21 @@ struct ContentView: UIViewRepresentable {
       download.delegate = self
     }
 
+    // MARK: - 缩放/横向平移
+
+    /// 输入框聚焦时 WebKit 会尝试缩放页面露出光标；返回 nil 直接禁用缩放
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? { nil }
+
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+      guard abs(scrollView.zoomScale - 1) > 0.01 else { return }
+      scrollView.setZoomScale(1, animated: false)
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+      guard abs(scrollView.contentOffset.x) > 0.5 else { return }
+      scrollView.contentOffset.x = 0
+    }
+
     #if DEBUG
       private var didRunSelftest = false
       private var didApplyDebugLaunch = false
@@ -282,6 +298,21 @@ struct ContentView: UIViewRepresentable {
           if args.contains("--open-settings") {
             webView.evaluateJavaScript(
               #"setTimeout(function () { document.querySelector('button[data-ios-settings="true"]')?.click() }, 900)"#
+            )
+          }
+          if args.contains("--new-experiment") {
+            webView.evaluateJavaScript(
+              #"setTimeout(function () { document.querySelector('button[aria-label="新建实验"]')?.click() }, 900)"#
+            )
+          }
+          if args.contains("--open-schedule") {
+            webView.evaluateJavaScript(
+              #"setTimeout(function () { var b = Array.prototype.find.call(document.querySelectorAll('button'), function (x) { return x.textContent && x.textContent.indexOf('添加安排') > -1 }); b && b.click() }, 900)"#
+            )
+          }
+          if args.contains("--fake-keyboard") {
+            webView.evaluateJavaScript(
+              #"setTimeout(function () { document.documentElement.style.setProperty('--ios-kb', '320px') }, 1600)"#
             )
           }
         }
