@@ -6,7 +6,7 @@
   "scripts": {
     "fetch": "node scripts/fetch-www.mjs",
     "fetch:local": "node scripts/fetch-www.mjs --core ../expermit-eln",
-    "build:sim": "xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build"
+    "build:sim": "xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build"
   },
   "devDependencies": {
     "fflate": "0.8.3"

@@ -33,7 +33,7 @@ jobs:
         run: |
           VER="${{ inputs.version || '0.1.4' }}"
           xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
-            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO MARKETING_VERSION="$VER" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             build
       - name: 打包模拟器 App

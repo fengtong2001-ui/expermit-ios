@@ -12,7 +12,7 @@ node scripts/fetch-www.mjs --core "$CORE"
 
 echo "—— 编译（模拟器）——"
 xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Debug \
-  -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO build
 
 APP="build/Build/Products/Debug-iphonesimulator/ExPermit.app"
