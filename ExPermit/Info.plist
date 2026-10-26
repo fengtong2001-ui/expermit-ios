@@ -9,13 +9,21 @@
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+  <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
   <key>ITSAppUsesNonExemptEncryption</key><false/>
   <key>LSRequiresIPhoneOS</key><true/>
   <key>NSAppTransportSecurity</key>
   <dict>
     <key>NSAllowsArbitraryLoads</key><true/>
+  </dict>
+  <key>NSCameraUsageDescription</key><string>拍摄实验照片并插入实验记录</string>
+  <key>NSPhotoLibraryUsageDescription</key><string>从相册选择图片插入实验记录</string>
+  <key>NSPhotoLibraryAddUsageDescription</key><string>把实验图片保存到相册</string>
+  <key>NSLocalNetworkUsageDescription</key><string>连接局域网内的 WebDAV 服务同步实验数据</string>
+  <key>UIApplicationSceneManifest</key>
+  <dict>
+    <key>UIApplicationSupportsMultipleScenes</key><false/>
   </dict>
   <key>UIApplicationSupportsIndirectInputEvents</key><true/>
   <key>UILaunchScreen</key><dict/>

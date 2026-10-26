@@ -1,40 +1,71 @@
 name: Build iOS
 
+# 模拟器编译校验 + 未签名 IPA 产物
+# 触发：push 到 main，或在 Actions 手动填核心版本号（同时发 Release）
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: 核心版本号（如 0.1.4，需核心仓已发布含 www 制品的 Release）
+        description: 核心版本号（如 0.1.4，需核心仓已发布含 www-<ver>.zip 的 Release）
         required: true
+        default: "0.1.4"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
       - run: npm install
-      - name: 取核心网页包
-        run: node scripts/fetch-www.mjs --ver ${{ inputs.version }}
-      - name: 编译（模拟器，无需签名）
+      - name: 取核心网页制品
+        run: node scripts/fetch-www.mjs --ver "${{ inputs.version || '0.1.4' }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: 模拟器编译校验
         run: |
+          VER="${{ inputs.version || '0.1.4' }}"
           xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
-            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
-      - name: 归档 .app
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO MARKETING_VERSION="$VER" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            build
+      - name: 打包模拟器 App
         run: |
-          APP=$(find build/Build/Products/Release-iphonesimulator -maxdepth 1 -name '*.app' | head -1)
-          ditto -c -k --keepParent "$APP" "ExPermit-ios-simulator-${{ inputs.version }}.zip"
-          echo "已打包 $APP"
+          VER="${{ inputs.version || '0.1.4' }}"
+          cd build/Build/Products/Release-iphonesimulator
+          ditto -c -k --keepParent ExPermit.app "$GITHUB_WORKSPACE/ExPermit-simulator-$VER.zip"
+      - name: 归档未签名真机包（本地用 Xcode/AltStore 签名安装）
+        run: |
+          VER="${{ inputs.version || '0.1.4' }}"
+          xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
+            -sdk iphoneos -archivePath build/ExPermit.xcarchive -derivedDataPath build/dd \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION="$VER" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            archive
+          mkdir -p build/Payload
+          cp -R build/ExPermit.xcarchive/Products/Applications/ExPermit.app build/Payload/
+          cd build && zip -qry "$GITHUB_WORKSPACE/ExPermit-unsigned-$VER.ipa" Payload
       - uses: actions/upload-artifact@v4
         with:
-          name: ExPermit-ios-simulator-${{ inputs.version }}
-          path: ExPermit-ios-simulator-${{ inputs.version }}.zip
-      - name: 说明
+          name: expermit-ios
+          path: |
+            ExPermit-simulator-*.zip
+            ExPermit-unsigned-*.ipa
+      - name: 发 Release（仅手动触发）
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "真机安装需要签名：在 Xcode 打开本工程 → Signing & Capabilities 选自己的 Apple ID（免费账号 7 天有效期），连手机 ⌘R 安装。"
+          VER="${{ inputs.version }}"
+          TAG="v$VER"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "iOS v$VER" --notes "由核心 v$VER 构建。未签名 IPA，需本地 Xcode 或 AltStore/Sideloadly 签名安装。"
+          gh release upload "$TAG" "ExPermit-unsigned-$VER.ipa" "ExPermit-simulator-$VER.zip" --clobber
+          echo "已发布 iOS v$VER"

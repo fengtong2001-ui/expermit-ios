@@ -10,7 +10,7 @@ final class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
   }
 
   func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
-    let path = task.request.url?.path ?? "/"
+    let path = task.request.url?.path.removingPercentEncoding ?? "/"
     let rel = String(path.dropFirst(path.hasPrefix("/") ? 1 : 0))
     let base = rel.isEmpty || rel.hasSuffix("/") ? rel + "index.html" : rel
     let file = root.appendingPathComponent(base).standardizedFileURL
@@ -22,9 +22,13 @@ final class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
       task.didFailWithError(NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoSuchFileError))
       return
     }
-    let ext = (file.pathExtension as NSString).lowercased
-    let mime = LocalSchemeHandler.mime(forExtension: ext)
-    let resp = HTTPURLResponse(url: task.request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": mime, "Cache-Control": "no-cache"])!
+    let mime = LocalSchemeHandler.mime(forExtension: file.pathExtension.lowercased())
+    let resp = HTTPURLResponse(
+      url: task.request.url!,
+      statusCode: 200,
+      httpVersion: "HTTP/1.1",
+      headerFields: ["Content-Type": mime, "Cache-Control": "no-cache"]
+    )!
     task.didReceive(resp)
     task.didReceive(data)
     task.didFinish()
@@ -44,10 +48,12 @@ final class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
     case "jpg", "jpeg": return "image/jpeg"
     case "gif": return "image/gif"
     case "webp": return "image/webp"
+    case "avif": return "image/avif"
+    case "ico": return "image/x-icon"
+    case "mp4": return "video/mp4"
     case "woff": return "font/woff"
     case "woff2": return "font/woff2"
     case "ttf": return "font/ttf"
-    case "ico": return "image/x-icon"
     case "txt": return "text/plain"
     case "wasm": return "application/wasm"
     default: return "application/octet-stream"

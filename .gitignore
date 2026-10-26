@@ -1,6 +1,8 @@
-node_modules
-ExPermit/www
-build
-DerivedData
+node_modules/
+ExPermit/www/
+build/
+DerivedData/
+release/
 *.xcuserstate
-xcuserdata
+xcuserdata/
+.DS_Store

@@ -9,6 +9,8 @@
 		000000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000006 /* ContentView.swift */; };
 		000000000000000000000003 /* SchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000007 /* SchemeHandler.swift */; };
 		000000000000000000000004 /* www in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000008 /* www */; };
+		000000000000000000000015 /* NativeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000017 /* NativeBridge.swift */; };
+		000000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000018 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +19,8 @@
 		000000000000000000000007 /* SchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemeHandler.swift; sourceTree = "<group>"; };
 		000000000000000000000008 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>"; };
 		000000000000000000000009 /* ExPermit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExPermit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000017 /* NativeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeBridge.swift; sourceTree = "<group>"; };
+		000000000000000000000018 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +48,8 @@
 				000000000000000000000005 /* ExPermitApp.swift */,
 				000000000000000000000006 /* ContentView.swift */,
 				000000000000000000000007 /* SchemeHandler.swift */,
+				000000000000000000000017 /* NativeBridge.swift */,
+				000000000000000000000018 /* Assets.xcassets */,
 				000000000000000000000008 /* www */,
 			);
 			path = ExPermit;
@@ -66,7 +72,7 @@
 			buildPhases = (
 				00000000000000000000000C /* Sources */,
 				00000000000000000000000B /* Frameworks */,
-				00000000000000000000000A /* Resources */,
+				00000000000000000000000D /* Resources */,
 			);
 			buildRules = (
 			);
@@ -111,6 +117,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				000000000000000000000004 /* www in Resources */,
+				000000000000000000000016 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +131,7 @@
 				000000000000000000000001 /* ExPermitApp.swift in Sources */,
 				000000000000000000000002 /* ContentView.swift in Sources */,
 				000000000000000000000003 /* SchemeHandler.swift in Sources */,
+				000000000000000000000015 /* NativeBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,7 +143,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -185,7 +192,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fengtong.expermit.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -207,7 +214,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.1.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fengtong.expermit.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
