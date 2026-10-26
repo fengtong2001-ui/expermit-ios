@@ -13,8 +13,12 @@ final class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
     let path = task.request.url?.path.removingPercentEncoding ?? "/"
     let rel = String(path.dropFirst(path.hasPrefix("/") ? 1 : 0))
     let base = rel.isEmpty || rel.hasSuffix("/") ? rel + "index.html" : rel
-    let file = root.appendingPathComponent(base).standardizedFileURL
-    guard file.path.hasPrefix(root.path) else {
+    // 真机上 Bundle 路径是 /private/var/...，standardizedFileURL 会变成 /var/...；
+    // 两边都解析符号链接后再比较，否则会被误判成路径穿越。
+    let rootResolved = root.resolvingSymlinksInPath()
+    let file = rootResolved.appendingPathComponent(base).standardizedFileURL.resolvingSymlinksInPath()
+    let rootPrefix = rootResolved.path.hasSuffix("/") ? rootResolved.path : rootResolved.path + "/"
+    guard file.path.hasPrefix(rootPrefix) else {
       task.didFailWithError(NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoSuchFileError))
       return
     }
