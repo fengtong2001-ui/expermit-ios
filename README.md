@@ -13,7 +13,7 @@ ExPermit 实验记录本的 **iOS 壳**。网页层、数据模型、同步协�
 
 ```bash
 npm install
-node scripts/fetch-www.mjs --core ../expermit-eln   # 或 --ver 0.1.4 从核心 Release 下载
+node scripts/fetch-www.mjs --core ../expermit-eln   # 或 --ver 0.1.5 从核心 Release 下载
 open ExPermit.xcodeproj                             # 选模拟器，⌘R
 ```
 

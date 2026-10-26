@@ -1,7 +1,7 @@
 {
   "name": "expermit-ios",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "ExPermit 实验记录本 · iOS 版（WKWebView 壳，网页源码在 expermit-eln）",
   "scripts": {
     "fetch": "node scripts/fetch-www.mjs",

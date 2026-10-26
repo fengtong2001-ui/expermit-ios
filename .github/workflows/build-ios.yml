@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 核心版本号（如 0.1.4，需核心仓已发布含 www-<ver>.zip 的 Release）
+        description: 核心版本号（如 0.1.5，需核心仓已发布含 www-<ver>.zip 的 Release）
         required: true
-        default: "0.1.4"
+        default: "0.1.5"
 
 permissions:
   contents: write
@@ -26,24 +26,24 @@ jobs:
           cache: npm
       - run: npm install
       - name: 取核心网页制品
-        run: node scripts/fetch-www.mjs --ver "${{ inputs.version || '0.1.4' }}"
+        run: node scripts/fetch-www.mjs --ver "${{ inputs.version || '0.1.5' }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: 模拟器编译校验
         run: |
-          VER="${{ inputs.version || '0.1.4' }}"
+          VER="${{ inputs.version || '0.1.5' }}"
           xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO MARKETING_VERSION="$VER" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             build
       - name: 打包模拟器 App
         run: |
-          VER="${{ inputs.version || '0.1.4' }}"
+          VER="${{ inputs.version || '0.1.5' }}"
           cd build/Build/Products/Release-iphonesimulator
           ditto -c -k --keepParent ExPermit.app "$GITHUB_WORKSPACE/ExPermit-simulator-$VER.zip"
       - name: 归档未签名真机包（本地用 Xcode/AltStore 签名安装）
         run: |
-          VER="${{ inputs.version || '0.1.4' }}"
+          VER="${{ inputs.version || '0.1.5' }}"
           xcodebuild -project ExPermit.xcodeproj -scheme ExPermit -configuration Release \
             -sdk iphoneos -archivePath build/ExPermit.xcarchive -derivedDataPath build/dd \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
